@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useCallback } from 'react';
@@ -29,6 +28,7 @@ export default function Home() {
         notificationsEnabled: true,
         frequency: 'daily',
     });
+    const [isDragging, setIsDragging] = useState(false);
 
   const handleImageUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -40,6 +40,30 @@ export default function Home() {
     };
     reader.readAsDataURL(file);
   }, []);
+
+    const handleDrop = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setIsDragging(false);
+
+        const file = event.dataTransfer.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImage(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    }, []);
+
+    const handleDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setIsDragging(true);
+    }, []);
+
+    const handleDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault();
+        setIsDragging(false);
+    }, []);
 
   const handleDiseaseDetection = useCallback(async () => {
     if (!image) {
@@ -82,7 +106,26 @@ export default function Home() {
           <CardDescription>Identify potential plant diseases</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col items-center">
-          <Input type="file" accept="image/*" onChange={handleImageUpload} className="mb-4" />
+                    <div
+                        className={`border-2 border-dashed rounded-md p-4 mb-4 w-full ${isDragging ? 'border-teal-500 bg-teal-50' : 'border-gray-300'}`}
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                    >
+                        <p className="text-center text-gray-500">
+                            {isDragging ? 'Drop here!' : 'Drag and drop an image here, or click to select a file'}
+                        </p>
+                        <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageUpload}
+                            className="hidden"
+                            id="image-upload"
+                        />
+                        <Label htmlFor="image-upload" className="cursor-pointer text-center block mt-2 text-blue-500 hover:underline">
+                            Select a file
+                        </Label>
+                    </div>
           {image && (
             <img src={image} alt="Uploaded leaf" className="max-w-full h-auto rounded-md mb-4" />
           )}
@@ -140,3 +183,4 @@ export default function Home() {
     </div>
   );
 }
+
